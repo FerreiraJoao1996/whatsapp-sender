@@ -1,5 +1,6 @@
 {
   "name": "whatsapp-sender",
+  "productName": "WhatsApp Sender",
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
@@ -20,10 +21,11 @@
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "send-message-mass-wa",
+    "appId": "whatsapp-sender-mass",
+    "productName": "WhatsApp Sender",
     "win": {
       "target": "nsis",
-      "icon": "icone.ico"
+      "icon": "favicon.ico"
     },
     "files": [
       "**/*"

@@ -2,69 +2,121 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Disparador WhatsApp - Envio em Massa</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 30px;
-      background: #f5f5f5;
-    }
-    textarea {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      font-size: 1rem;
-      border-radius: 5px;
-      border: 1px solid #ccc;
+    * {
       box-sizing: border-box;
-      height: 100px;
-      resize: vertical;
     }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f2f3f7;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #202020;
+    }
+
+    .container {
+      background: #fff;
+      max-width: 600px;
+      width: 100%;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    label {
+      font-weight: 600;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    textarea, input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      resize: vertical;
+      background-color: #fafafa;
+    }
+
     button {
       background-color: #25d366;
       color: white;
       border: none;
-      padding: 15px 20px;
+      padding: 15px;
       font-size: 1.1rem;
-      border-radius: 5px;
+      border-radius: 8px;
       cursor: pointer;
-      width: 100%;
+      transition: background-color 0.2s ease-in-out;
     }
+
     button:hover {
       background-color: #1ebe5d;
     }
+
     #status {
-      margin-top: 15px;
-      font-weight: bold;
-      color: #333;
       white-space: pre-wrap;
-      max-height: 200px;
-      overflow-y: auto;
-      background: white;
-      padding: 10px;
-      border-radius: 5px;
+      background-color: #f9f9f9;
+      padding: 12px;
+      border-radius: 8px;
       border: 1px solid #ddd;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 15px;
+      }
+
+      button {
+        padding: 12px;
+        font-size: 1rem;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Disparador WhatsApp - Envio em Massa</h1>
+  <h1>📲 WhatsApp Sender</h1>
 
-  <label for="fileInput">Importar números do Excel (.xlsx):</label><br/>
-  <input type="file" id="fileInput" accept=".xlsx,.xls" /><br/><br/>
+  <div class="container">
+    <div>
+      <label for="fileInput">📄 Importar números do Excel (.xlsx):</label>
+      <input type="file" id="fileInput" accept=".xlsx,.xls" />
+    </div>
 
-  <textarea id="numbers" placeholder="Cole os números aqui (um por linha), ex:
-5511999999999
-5511987654321"></textarea>
-  
-  <textarea id="message" placeholder="Mensagem a enviar" rows="5"></textarea>
-  
-  <button id="sendBtn">Enviar Mensagens</button>
-  
-  <pre id="status"></pre>
+    <div>
+      <label for="numbers">📋 Números (um por linha):</label>
+      <textarea id="numbers" placeholder="Ex: 5511999999999&#10;5511987654321" rows="5"></textarea>
+    </div>
+
+    <div>
+      <label for="message">💬 Mensagem:</label>
+      <textarea id="message" placeholder="Digite sua mensagem aqui..." rows="4"></textarea>
+    </div>
+
+    <button id="sendBtn">🚀 Enviar Mensagens</button>
+
+    <div id="status"></div>
+  </div>
 
   <script src="https://cdn.sheetjs.com/xlsx-0.19.1/package/dist/xlsx.full.min.js"></script>
-
   <script>
     const fileInput = document.getElementById('fileInput');
     const numbersTextarea = document.getElementById('numbers');
@@ -79,23 +131,21 @@
       reader.onload = (evt) => {
         const data = new Uint8Array(evt.target.result);
         const workbook = XLSX.read(data, {type: 'array'});
-
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, {header:1}); 
+        const firstSheet = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheet];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, {header:1});
 
         const numbersFromExcel = jsonData
-          .map(row => row[0]) // pegar 1a coluna
+          .map(row => row[0])
           .filter(cell => typeof cell === 'string' || typeof cell === 'number')
           .map(cell => String(cell).trim())
           .filter(cell => cell.length > 0);
 
-        const existingNumbers = numbersTextarea.value.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+        const existingNumbers = numbersTextarea.value.split('\n').map(n => n.trim()).filter(Boolean);
         const allNumbersSet = new Set([...existingNumbers, ...numbersFromExcel]);
         numbersTextarea.value = Array.from(allNumbersSet).join('\n');
-        
-        status.textContent = `✅ Importados ${numbersFromExcel.length} números do Excel. Total no campo: ${allNumbersSet.size}`;
+
+        status.textContent = `✅ ${numbersFromExcel.length} números importados do Excel. Total atual: ${allNumbersSet.size}`;
       };
       reader.readAsArrayBuffer(file);
     });
@@ -114,13 +164,13 @@
         .map(n => n.trim())
         .filter(n => n.length > 0);
 
-      status.textContent = `Enviando mensagens para ${numbers.length} número(s)... Aguarde e faça login no WhatsApp Web se solicitado.\n`;
+      status.textContent = `⌛ Enviando mensagens para ${numbers.length} número(s)... Aguarde login no WhatsApp Web, se necessário.\n`;
 
       try {
         const results = await window.electronAPI.sendWhatsAppMessages({ numbers, message });
         status.textContent += results.join('\n');
       } catch (error) {
-        status.textContent += '\nErro: ' + error.message;
+        status.textContent += '\n❌ Erro: ' + error.message;
       }
     });
   </script>
