@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Disparador WhatsApp - Envio em Massa</title>
+  <style>
+    /* seus estilos anteriores */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      background: #f5f5f5;
+    }
+    textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      height: 100px;
+      resize: vertical;
+    }
+    button {
+      background-color: #25d366;
+      color: white;
+      border: none;
+      padding: 15px 20px;
+      font-size: 1.1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #1ebe5d;
+    }
+    #status {
+      margin-top: 15px;
+      font-weight: bold;
+      color: #333;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <h1>Disparador WhatsApp - Envio em Massa</h1>
+
+  <label for="fileInput">Importar números do Excel (.xlsx):</label><br/>
+  <input type="file" id="fileInput" accept=".xlsx,.xls" /><br/><br/>
+
+  <textarea id="numbers" placeholder="Cole os números aqui (um por linha), ex:
+5511999999999
+5511987654321"></textarea>
+  
+  <textarea id="message" placeholder="Mensagem a enviar" rows="5"></textarea>
+  
+  <button id="sendBtn">Enviar Mensagens</button>
+  
+  <pre id="status"></pre>
+
+  <!-- SheetJS CDN para ler Excel no browser -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.19.1/package/dist/xlsx.full.min.js"></script>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const numbersTextarea = document.getElementById('numbers');
+    const sendBtn = document.getElementById('sendBtn');
+    const status = document.getElementById('status');
+
+    // Função para extrair números de arquivo Excel e colocar no textarea
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, {type: 'array'});
+        // Pegando a primeira aba do excel
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+
+        // Converter para JSON (array de objetos)
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, {header:1}); 
+
+        // Extrair os valores da primeira coluna (coluna A)
+        const numbersFromExcel = jsonData
+          .map(row => row[0]) // pegar 1a coluna
+          .filter(cell => typeof cell === 'string' || typeof cell === 'number')
+          .map(cell => String(cell).trim())
+          .filter(cell => cell.length > 0);
+
+        // Adicionar ao textarea, juntando com os números já digitados (evitar duplicados)
+        const existingNumbers = numbersTextarea.value.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+        const allNumbersSet = new Set([...existingNumbers, ...numbersFromExcel]);
+        numbersTextarea.value = Array.from(allNumbersSet).join('\n');
+        
+        status.textContent = `✅ Importados ${numbersFromExcel.length} números do Excel. Total no campo: ${allNumbersSet.size}`;
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    sendBtn.addEventListener('click', async () => {
+      const numbersRaw = numbersTextarea.value.trim();
+      const message = document.getElementById('message').value.trim();
+
+      if (!numbersRaw || !message) {
+        alert('Preencha os números e a mensagem!');
+        return;
+      }
+
+      const numbers = numbersRaw
+        .split('\n')
+        .map(n => n.trim())
+        .filter(n => n.length > 0);
+
+      status.textContent = `Enviando mensagens para ${numbers.length} número(s)... Aguarde e faça login no WhatsApp Web se solicitado.\n`;
+
+      try {
+        const results = await window.electronAPI.sendWhatsAppMessages({ numbers, message });
+        status.textContent += results.join('\n');
+      } catch (error) {
+        status.textContent += '\nErro: ' + error.message;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{
+  "name": "whatsapp-sender",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "chrome-launcher": "^1.2.0",
+    "puppeteer": "^24.12.0"
+  },
+  "devDependencies": {
+    "electron": "^37.2.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "send-message-mass-wa",
+    "win": {
+      "target": "nsis",
+      "icon": "icone.ico"
+    },
+    "files": [
+      "**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "chrome-profile",
+        "to": "chrome-profile",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
+  }
+}
