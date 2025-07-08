@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>Disparador WhatsApp - Envio em Massa</title>
   <style>
-    /* seus estilos anteriores */
     body {
       font-family: Arial, sans-serif;
       margin: 30px;
@@ -64,7 +63,6 @@
   
   <pre id="status"></pre>
 
-  <!-- SheetJS CDN para ler Excel no browser -->
   <script src="https://cdn.sheetjs.com/xlsx-0.19.1/package/dist/xlsx.full.min.js"></script>
 
   <script>
@@ -73,7 +71,6 @@
     const sendBtn = document.getElementById('sendBtn');
     const status = document.getElementById('status');
 
-    // Função para extrair números de arquivo Excel e colocar no textarea
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -82,21 +79,18 @@
       reader.onload = (evt) => {
         const data = new Uint8Array(evt.target.result);
         const workbook = XLSX.read(data, {type: 'array'});
-        // Pegando a primeira aba do excel
+
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
 
-        // Converter para JSON (array de objetos)
         const jsonData = XLSX.utils.sheet_to_json(worksheet, {header:1}); 
 
-        // Extrair os valores da primeira coluna (coluna A)
         const numbersFromExcel = jsonData
           .map(row => row[0]) // pegar 1a coluna
           .filter(cell => typeof cell === 'string' || typeof cell === 'number')
           .map(cell => String(cell).trim())
           .filter(cell => cell.length > 0);
 
-        // Adicionar ao textarea, juntando com os números já digitados (evitar duplicados)
         const existingNumbers = numbersTextarea.value.split('\n').map(n => n.trim()).filter(n => n.length > 0);
         const allNumbersSet = new Set([...existingNumbers, ...numbersFromExcel]);
         numbersTextarea.value = Array.from(allNumbersSet).join('\n');
