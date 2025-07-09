@@ -1,5 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  sendWhatsAppMessages: (data) => ipcRenderer.invoke('send-whatsapp-messages', data),
+  onReady: (callback) => ipcRenderer.on('puppeteer-ready', callback),
+  onFail: (callback) => ipcRenderer.on('puppeteer-failed', callback),
+  sendMessages: (payload) => ipcRenderer.invoke('send-whatsapp-messages', payload)
 });

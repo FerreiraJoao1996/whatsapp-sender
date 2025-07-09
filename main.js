@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const puppeteer = require('puppeteer');
+const fs = require('fs');
+const puppeteer = require('puppeteer-core');
 
 let mainWindow;
 let browser;
@@ -20,20 +21,68 @@ function createWindow() {
   mainWindow.loadFile('index.html');
 }
 
+function findChromePath() {
+  const possiblePaths = [
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    path.join(process.env.LOCALAPPDATA || '', 'Google\\Chrome\\Application\\chrome.exe'),
+  ];
+
+  for (const chromePath of possiblePaths) {
+    if (fs.existsSync(chromePath)) {
+      return chromePath;
+    }
+  }
+
+  return null;
+}
+
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
+async function waitForPageReady(timeout = 10000) {
+  const start = Date.now();
+  while (!page && Date.now() - start < timeout) {
+    await delay(100);
+  }
+  return !!page;
+}
+
 app.whenReady().then(async () => {
   createWindow();
 
-  const userDataPath = path.join(app.getPath('userData'), 'chrome-profile'); 
+  const userDataPath = path.join(app.getPath('userData'), 'chrome-profile');
+  const chromePath = findChromePath();
 
-  browser = await puppeteer.launch({
-    headless: false,
-    args: ['--no-sandbox'],
-    userDataDir: userDataPath,
-  });
+  if (!chromePath) {
+    console.error('❌ Chrome não encontrado');
+    mainWindow.webContents.once('did-finish-load', () => {
+      mainWindow.webContents.send('puppeteer-failed', 'Chrome não encontrado no sistema');
+    });
+    return;
+  }
 
-  page = await browser.newPage();
-  await page.goto('https://web.whatsapp.com');
-  console.log('🚀 Puppeteer aberto, aguarde login no WhatsApp Web');
+  try {
+    browser = await puppeteer.launch({
+      headless: false,
+      executablePath: chromePath,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      userDataDir: userDataPath,
+    });
+
+    page = await browser.newPage();
+    await page.goto('https://web.whatsapp.com');
+
+    console.log('🚀 Puppeteer aberto, aguarde login no WhatsApp Web');
+
+    mainWindow.webContents.once('did-finish-load', () => {
+      mainWindow.webContents.send('puppeteer-ready');
+    });
+  } catch (err) {
+    console.error('❌ Erro ao iniciar Puppeteer:', err);
+    mainWindow.webContents.once('did-finish-load', () => {
+      mainWindow.webContents.send('puppeteer-failed', err.message);
+    });
+  }
 });
 
 app.on('window-all-closed', async () => {
@@ -45,13 +94,12 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
-const delay = ms => new Promise(res => setTimeout(res, ms));
-
 ipcMain.handle('send-whatsapp-messages', async (event, { numbers, message }) => {
   const results = [];
 
-  if (!page) {
-    return ['❌ Erro: Página do WhatsApp Web não está aberta'];
+  const ready = await waitForPageReady();
+  if (!ready) {
+    return ['❌ Erro: WhatsApp Web ainda não está pronto'];
   }
 
   for (const number of numbers) {

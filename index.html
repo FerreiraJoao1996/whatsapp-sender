@@ -167,7 +167,7 @@
       status.textContent = `⌛ Enviando mensagens para ${numbers.length} número(s)... Aguarde login no WhatsApp Web, se necessário.\n`;
 
       try {
-        const results = await window.electronAPI.sendWhatsAppMessages({ numbers, message });
+        const results = await window.electronAPI.sendMessages({ numbers, message });
         status.textContent += results.join('\n');
       } catch (error) {
         status.textContent += '\n❌ Erro: ' + error.message;
