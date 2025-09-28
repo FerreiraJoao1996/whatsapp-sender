@@ -6,103 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Disparador WhatsApp - Envio em Massa</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f2f3f7;
-      margin: 0;
-      padding: 20px;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    h1 {
-      margin-bottom: 20px;
-      color: #202020;
-    }
-
-    .container {
-      background: #fff;
-      max-width: 600px;
-      width: 100%;
-      border-radius: 12px;
-      padding: 25px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    label {
-      font-weight: 600;
-      margin-bottom: 5px;
-      display: block;
-    }
-
-    textarea,
-    input[type="file"] {
-      width: 100%;
-      padding: 12px;
-      font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      resize: vertical;
-      background-color: #fafafa;
-    }
-
-    button {
-      background-color: #25d366;
-      color: white;
-      border: none;
-      padding: 15px;
-      font-size: 1.1rem;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.2s ease-in-out;
-    }
-
-    button:hover {
-      background-color: #1ebe5d;
-    }
-
-    #status {
-      white-space: pre-wrap;
-      background-color: #f9f9f9;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      max-height: 300px;
-      overflow-y: auto;
-      font-size: 0.9rem;
-    }
-
-    @media (max-width: 600px) {
-      .container {
-        padding: 15px;
-      }
-
-      button {
-        padding: 12px;
-        font-size: 1rem;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
   <nav>
     <button onclick="navigate('disparador')">📲 Disparador</button>
-    <button onclick="navigate('cadastrados')">📊 Cadastrados</button>
+    <button onclick="navigate('cadastrados')">📊 Clientes</button>
   </nav>
   <div id="send">
     <h1>📲 WhatsApp Sender</h1>
@@ -153,8 +63,7 @@
       </table>
     </div>
   </div>
-
-
+  
   <script src="https://cdn.sheetjs.com/xlsx-0.19.1/package/dist/xlsx.full.min.js"></script>
   <script src="logic.js"></script>
   <script src="clients.js"></script>
