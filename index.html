@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,10 @@
   <style>
     * {
       box-sizing: border-box;
+    }
+
+    .hidden {
+      display: none;
     }
 
     body {
@@ -32,7 +37,7 @@
       width: 100%;
       border-radius: 12px;
       padding: 25px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
       display: flex;
       flex-direction: column;
       gap: 15px;
@@ -44,7 +49,8 @@
       display: block;
     }
 
-    textarea, input[type="file"] {
+    textarea,
+    input[type="file"] {
       width: 100%;
       padding: 12px;
       font-size: 1rem;
@@ -92,87 +98,84 @@
     }
   </style>
 </head>
+
 <body>
-  <h1>📲 WhatsApp Sender</h1>
+  <nav>
+    <button onclick="navigate('disparador')">📲 Disparador</button>
+    <button onclick="navigate('cadastrados')">📊 Cadastrados</button>
+  </nav>
+  <div id="send">
+    <h1>📲 WhatsApp Sender</h1>
 
-  <div class="container">
-    <div>
-      <label for="fileInput">📄 Importar números do Excel (.xlsx):</label>
-      <input type="file" id="fileInput" accept=".xlsx,.xls" />
+    <div class="container">
+      <div>
+        <label for="fileInput">📄 Importar números do Excel (.xlsx):</label>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" />
+      </div>
+
+      <div>
+        <label for="numbers">📋 Números (um por linha):</label>
+        <textarea id="numbers" placeholder="Ex: 5511999999999&#10;5511987654321" rows="5"></textarea>
+      </div>
+
+      <div>
+        <label for="message">💬 Mensagem:</label>
+        <textarea id="message" placeholder="Digite sua mensagem aqui..." rows="4"></textarea>
+      </div>
+
+      <button id="sendBtn">🚀 Enviar Mensagens</button>
+
+      <div id="status"></div>
     </div>
-
-    <div>
-      <label for="numbers">📋 Números (um por linha):</label>
-      <textarea id="numbers" placeholder="Ex: 5511999999999&#10;5511987654321" rows="5"></textarea>
+  </div>
+  <div id="clients">
+    <h1>📊 Clientes Cadastrados</h1>
+    <div class="container-cadastrados">
+      <div>
+        <label for="clientsFile">📄 Importar clientes (.xlsx):</label>
+        <input type="file" id="clientsFile" accept=".xlsx,.xls" />
+      </div>
+      <table border="1" cellpadding="8" id="clientsTable">
+        <thead>
+          <tr>
+            <th>CNPJ</th>
+            <th>Razão Social</th>
+            <th>Nome Fantasia</th>
+            <th>Endereço</th>
+            <th>Cidade</th>
+            <th>Capital Social</th>
+            <th>Email</th>
+            <th>Telefone Fixo</th>
+            <th>Telefone Celular</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
-
-    <div>
-      <label for="message">💬 Mensagem:</label>
-      <textarea id="message" placeholder="Digite sua mensagem aqui..." rows="4"></textarea>
-    </div>
-
-    <button id="sendBtn">🚀 Enviar Mensagens</button>
-
-    <div id="status"></div>
   </div>
 
+
   <script src="https://cdn.sheetjs.com/xlsx-0.19.1/package/dist/xlsx.full.min.js"></script>
+  <script src="logic.js"></script>
+  <script src="clients.js"></script>
   <script>
-    const fileInput = document.getElementById('fileInput');
-    const numbersTextarea = document.getElementById('numbers');
-    const sendBtn = document.getElementById('sendBtn');
-    const status = document.getElementById('status');
 
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+    function navigate(route) {
+      const send = document.getElementById("send");
+      const clients = document.getElementById("clients");
 
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        const data = new Uint8Array(evt.target.result);
-        const workbook = XLSX.read(data, {type: 'array'});
-        const firstSheet = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheet];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, {header:1});
-
-        const numbersFromExcel = jsonData
-          .map(row => row[0])
-          .filter(cell => typeof cell === 'string' || typeof cell === 'number')
-          .map(cell => String(cell).trim())
-          .filter(cell => cell.length > 0);
-
-        const existingNumbers = numbersTextarea.value.split('\n').map(n => n.trim()).filter(Boolean);
-        const allNumbersSet = new Set([...existingNumbers, ...numbersFromExcel]);
-        numbersTextarea.value = Array.from(allNumbersSet).join('\n');
-
-        status.textContent = `✅ ${numbersFromExcel.length} números importados do Excel. Total atual: ${allNumbersSet.size}`;
-      };
-      reader.readAsArrayBuffer(file);
-    });
-
-    sendBtn.addEventListener('click', async () => {
-      const numbersRaw = numbersTextarea.value.trim();
-      const message = document.getElementById('message').value.trim();
-
-      if (!numbersRaw || !message) {
-        alert('Preencha os números e a mensagem!');
-        return;
+      if (route === "disparador") {
+        send.classList.remove("hidden");
+        clients.classList.add("hidden");
+      } else if (route === "cadastrados") {
+        send.classList.add("hidden");
+        clients.classList.remove("hidden");
+        bindClientsFileInput();
       }
+    }
 
-      const numbers = numbersRaw
-        .split('\n')
-        .map(n => n.trim())
-        .filter(n => n.length > 0);
-
-      status.textContent = `⌛ Enviando mensagens para ${numbers.length} número(s)... Aguarde login no WhatsApp Web, se necessário.\n`;
-
-      try {
-        const results = await window.electronAPI.sendMessages({ numbers, message });
-        status.textContent += results.join('\n');
-      } catch (error) {
-        status.textContent += '\n❌ Erro: ' + error.message;
-      }
-    });
+    navigate("disparador");
   </script>
 </body>
+
 </html>

@@ -126,17 +126,33 @@ ipcMain.handle('send-whatsapp-messages', async (event, { numbers, message }) => 
 
       await delay(2000);
 
-      const sendBtnSelector = 'button[aria-label="Enviar"]';
-      const altSendBtnSelector = 'span[data-icon="send"]';
+      const sendButtonSelectors = [
+        'button[aria-label="Enviar"]',
+        'span[data-icon="send"]',
+        'div[role="button"][data-testid="send"]',
+        'span[data-icon="wds-ic-send-filled"]'
+      ];
 
-      const sendButton = await page.$(sendBtnSelector) || await page.$(altSendBtnSelector);
+      let sendButton = null;
+      for (const selector of sendButtonSelectors) {
+        sendButton = await page.$(selector);
+        if (sendButton) break;
+      }
 
       if (sendButton) {
         await sendButton.click();
         await delay(3000);
         results.push(`✅ Enviado: ${number}`);
       } else {
-        results.push(`❌ Botão de envio não encontrado: ${number}`);
+        const input = await page.$('div[contenteditable="true"]');
+        if (input) {
+          await input.focus();
+          await page.keyboard.press('Enter');
+          await delay(3000);
+          results.push(`✅ Enviado via Enter: ${number}`);
+        } else {
+          results.push(`❌ Botão de envio não encontrado: ${number}`);
+        }
       }
     } catch (err) {
       results.push(`❌ Erro ao enviar para ${number}: ${err.message}`);
